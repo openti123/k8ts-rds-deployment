@@ -1,13 +1,21 @@
-data "aws_secretsmanager_secret" "db_secret" {
+resource "aws_secretsmanager_secret" "db_secret" {
   name = var.db_secret_name
 }
 
-data "aws_secretsmanager_secret_version" "db_secret_version" {
-  secret_id = data.aws_secretsmanager_secret.db_secret.id
+resource "aws_secretsmanager_secret_version" "db_secret_version" {
+  secret_id = aws_secretsmanager_secret.db_secret.id
+  secret_string = jsonencode({
+    username = var.db_username
+    password = var.db_password
+  })
 }
 
+
+
 locals {
-  db_credentials = jsondecode(data.aws_secretsmanager_secret_version.db_secret_version.secret_string)
+  db_credentials = jsondecode(
+    aws_secretsmanager_secret_version.db_secret_version.secret_string
+  )
 }
 
 
@@ -35,11 +43,11 @@ resource "aws_db_instance" "itgenius_instance" {
 
 # Subnet Group for RDS
 resource "aws_db_subnet_group" "itgenius_subnet_group" {
-  name       = "itgenius-db-subnet-group"
+  name       = "itgenius-db-subnet-group-v1"
   subnet_ids = var.subnet_ids
 
   tags = {
-    Name = "itgenius-db-subnet-group"
+    Name = "itgenius-db-subnet-group-v1"
   }
 
 }
